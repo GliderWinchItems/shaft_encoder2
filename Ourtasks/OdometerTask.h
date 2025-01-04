@@ -56,12 +56,19 @@ struct ODOMETERFUNCTION
    uint8_t hbstate;  // Hearbeat<->64Hz sending 
 
    struct ODOMETERLC lc; // Parameters for odometer function
+
    /* Encoder counts and timer captures. */
    struct ODOTIMCT odotimct[4]; // Latest readings
    struct ODOTIMCT odotimct_buff[4]; // Buffer ISR readings
    struct ODOTIMCT_INT odotimct_int_diff[4]; // diff = (int)(new - previous) like edges
    struct ODOTIMCT odotimct_buff_prev[4]; // Latestreadings
-   int32_t en_cnt;      // Latest encoder CNT at 1/64th sec tick
+   int32_t en_cnt;      // Latest encoder CNT at 1/64th sec TIM2 interrupt
+   int32_t en_cnt_prev; // Previous
+   int32_t en_cnt_diff; // Difference (buffering)
+   uint8_t oe_A; // Odd/even (rising/falling edges) encoder chan A
+   uint8_t oe_B; // Odd/even (rising/falling edges) encoder chan B
+
+   /* Computation and scaling speed and acceleration. */
    float speed_sum;     // Sum speed: like edges, like channels
    float speed[4];      // Channel A & B, rising and falling edges
    float speed_prev[4]; // Previous for computing difference
@@ -70,9 +77,12 @@ struct ODOMETERFUNCTION
    float odo_speed[4];  // Raw speed (ct/tim)
    float odo_speed_ave_motor; // raw speed scaled (rpm)
    float odo_speed_ave_drum;  // motor speed scaled (rpm)
-   uint8_t oe_A; // Odd/even (rising/falling edges) encoder chan A
-   uint8_t oe_B; // Odd/even (rising/falling edges) encoder chan B
+   float en_cnt_speed; // 
+   float en_cnt_speed_prev; //
+   float en_cnt_speed_diff; //
+   float en_cnt_accel_motor; 
 
+   /* Computation and scaling line-out. */
    float line_out;       // Line out (meters), estimated
    float initial_circum; // Circumference with loaded rope
    float working_circum; // Amount of line per drum rev (meters), varies
@@ -85,11 +95,12 @@ struct ODOMETERFUNCTION
    int32_t line_out_ctr; // encoder counter
    int32_t line_out_ref; // encoder count for zero line out
 
+   /* Incoming CAN msgs that notify this task. */
    struct MAILBOXCAN* pmbx_cid_gps_sync;    // CANID_HB_TIMESYNC:  U8 : GPS_1: U8 GPS time sync distribution msg-GPS time sync msg
    struct MAILBOXCAN* pmbx_cid_mc_state;    //'CANID_MC_STATE','26000000', 'MC', 'UNDEF','MC: Launch state msg');
    struct MAILBOXCAN* pmbx_cid_cmd_encoder; // CANID_CMD_ENCODER1|CANID_CMD_ENCODER2', '83600000'|'83800000','UNIT_ENCODER', 1,1,'U8_VAR','DiscoveryF4 encoder: command');
 
-   /* CAN msgs */
+   /* CAN msgs this task sends. */
    struct CANTXQMSG canmsg[NUMCANMSGSODOMETER];
 
    uint32_t ledctr1;    // Counter for throttling green LED

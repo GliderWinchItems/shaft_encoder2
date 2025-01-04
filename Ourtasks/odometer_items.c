@@ -214,17 +214,28 @@ void odometer_items_compute(void)
       {
          p->speed[i] = (float)p->odotimct_int_diff[i].ct/(float)p->odotimct_int_diff[i].tim;
       }
-      p->accel_sum    += p->speed[i] - p->speed_prev[i];
-      p->speed_sum    += p->speed[i];
-      p->speed_prev[i] = p->speed[i];
+      p->accel_sum      += p->speed[i] - p->speed_prev[i];
+      p->speed_sum      += p->speed[i];
+      p->speed_prev[i]   = p->speed[i];
       p->accel_ave_motor = p->accel_sum * p->lc.scale_speediff_accel;
    }
-   return;
+
+   /* Speed and accel computed on encoder counts during 1/64th sec TIM2 OC. */
+   p->en_cnt_speed = (float)p->en_cnt_diff * ((float)(60*64)/1440); // RPM
+   p->en_cnt_speed_diff  = p->en_cnt_speed - p->en_cnt_speed_prev;
+   // scale speed rpm differences to radians/sec^2 
+   p->en_cnt_accel_motor = p->en_cnt_speed_diff* ((float)(3.141592654*2*64)/60);
+   p->en_cnt_speed_prev  = p->en_cnt_speed; // Save for next cycle
+
+ return;
 }
 /* *************************************************************************
  * void odometer_items_send_speed_lineout_msg(struct ODOMETERFUNCTION* p);
  * @brief   : Send speed & line-out CAN msg timing
  * *************************************************************************/
+extern osThreadId defaultTaskHandle;
+#define DEFAULTTSKBIT01 (1 << 1)  // Task notification bit for sw timer: something else
+
 void odometer_items_send_speed_lineout_msg(struct ODOMETERFUNCTION* p)
 {
    /* Compute and scale */
@@ -237,7 +248,10 @@ void odometer_items_send_speed_lineout_msg(struct ODOMETERFUNCTION* p)
    send_msg1(p);
 // ### Temporary for debugging
 send_msg2(p);
-
+   xTaskNotify(defaultTaskHandle, 
+         DEFAULTTSKBIT01,  /* 'or' bit assigned to buffer to notification value. */
+         eSetBits  
+          ); 
    return;
 }
 /* *************************************************************************
@@ -419,6 +433,9 @@ task (OdometerTask) will use odotimct_buff before the next measurement interval 
    p->odotimct_int_diff[3].tim = (int)(p->odotimct_buff[3].tim - p->odotimct_buff_prev[3].tim);
    p->odotimct_int_diff[3].ct  = (int)(p->odotimct_buff[3].ct  - p->odotimct_buff_prev[3].ct );
    p->odotimct_buff_prev[3]  = p->odotimct_buff[3];
+
+   p->en_cnt_diff = p->en_cnt - p->en_cnt_prev;
+   p->en_cnt_prev = p->en_cnt;
 
    /* Notify OdometerTask a new set of readings is ready. (End of 1/64 sec intervals.) */
    BaseType_t xHigherPriorityTaskWoken = pdFALSE;

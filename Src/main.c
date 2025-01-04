@@ -317,7 +317,7 @@ int main(void)
 	// See canfilter_setup.h
 
 	/* Create MailboxTask */
-	xMailboxTaskCreate(2); // (arg) = priority
+	xMailboxTaskCreate(osPriorityNormal+1); // (arg) = priority
 
 	/* Create Mailbox control block w 'take' pointer for each CAN module. */
 	struct MAILBOXCANNUM* pmbxret;
@@ -335,7 +335,7 @@ int main(void)
   xADCTaskCreate(1); // (arg) = priority
 
   /* Odometer task */
-  Thrdret = xOdometerTaskCreate(5); // (arg) = priority
+  Thrdret = xOdometerTaskCreate(osPriorityNormal+2); // (arg) = priority
   if (Thrdret == NULL) morse_trap(2164); 
 
   /* Levelwind (stepper) task */
@@ -820,16 +820,14 @@ osDelay(0); // Debugging HardFault
 //#define ADCSHOW
 //#define SHOWADCCOMMONCOMPUTATIONS
 //#define STEPPERSHOW
-#define ENCODERSHOW
+//#define ENCODERSHOW
+#define SHOWENTIMCT
 
 	#define DEFAULTTSKBIT00	(1 << 0)  // Task notification bit for sw timer: stackusage
 	#define DEFAULTTSKBIT01	(1 << 1)  // Task notification bit for sw timer: something else
 
 	/* A notification copies the internal notification word to this. */
 	uint32_t noteval = 0;    // Receives notification word upon an API notify
-
-	/* notification bits processed after a 'Wait. */
-	uint32_t noteused = 0;
 
 	struct SERIALSENDTASKBCB* pbuf1 = getserialbuf(&HUARTMON,96);
 	if (pbuf1 == NULL) morse_trap(11);
@@ -884,11 +882,27 @@ uint8_t ratepace = 0;
 
 	for ( ;; )
 	{
-		xTaskNotifyWait(noteused, 0, &noteval, portMAX_DELAY);
-		noteused = 0;
+		xTaskNotifyWait(0,0xffffffff, &noteval, portMAX_DELAY);
+    if ((noteval & DEFAULTTSKBIT01) != 0)
+    {
+
+#ifdef SHOWENTIMCT      
+      struct ODOMETERFUNCTION* pe = &odometerfunction; // Convenience pointer
+
+      yprintf(&pbuf1,"\n\r%7d %4d", pe->odotimct_int_diff[0].tim, pe->odotimct_int_diff[0].ct);
+      yprintf(&pbuf2," %7d %4d",    pe->odotimct_int_diff[1].tim, pe->odotimct_int_diff[1].ct);
+      yprintf(&pbuf3," %7d %4d",    pe->odotimct_int_diff[2].tim, pe->odotimct_int_diff[2].ct);
+      yprintf(&pbuf4," %7d %4d %4d",pe->odotimct_int_diff[3].tim, pe->odotimct_int_diff[3].ct, pe->en_cnt_diff);
+      yprintf(&pbuf1," %9.3f", pe->odo_speed_ave_motor);
+      yprintf(&pbuf2," %9.3f", pe->accel_ave_motor);
+      yprintf(&pbuf3," %9.3f", pe->en_cnt_speed);
+      yprintf(&pbuf4," %9.3f", pe->en_cnt_accel_motor);
+
+#endif      
+      }
+
 		if ((noteval & DEFAULTTSKBIT00) != 0)
 		{
-			noteused |= DEFAULTTSKBIT00;
 // ================= Higest rate =======================================
     ratepace += 1;
     if (ratepace > 0) // Slow down LCD output rate if desired
@@ -920,7 +934,7 @@ uint8_t ratepace = 0;
   yprintf(&pbuf1,"\n\rspeed_sum%14.8f",pen->speed_sum);
   
   float ftmp1 = pen->speed_sum * pen->lc.scale_en_mtr; // Scale raw->motor rpm
-  yprintf(&pbuf4,"\n\r_ave_mtr %12.6f",ftmp1);
+  yprintf(&pbuf4,"\n\r_ave_mtr %12.6f %14.6f",ftmp1, pen->en_cnt_speed);
 
   ftmp1 = ftmp1 * pen->lc.scale_mtr_drum;  // Scale motor rpm->drum rpm
   yprintf(&pbuf4,"\n\r_ave_drum%12.6f",ftmp1);
@@ -928,7 +942,10 @@ uint8_t ratepace = 0;
   yprintf(&pbuf2,"\n\r    tim :%12d%12d%12d%12d"    ,pen->odotimct_buff[0].tim,pen->odotimct_buff[1].tim,pen->odotimct_buff[2].tim,pen->odotimct_buff[3].tim);
   yprintf(&pbuf3,"\n\r    ct  :%12d%12d%12d%12d"    ,pen->odotimct_buff[0].ct ,pen->odotimct_buff[1].ct ,pen->odotimct_buff[2].ct ,pen->odotimct_buff[3].ct );
   yprintf(&pbuf3,"\n\rdiff.tim:%12d%12d%12d%12d"    ,pen->odotimct_int_diff[0].tim,pen->odotimct_int_diff[1].tim,pen->odotimct_int_diff[2].tim,pen->odotimct_int_diff[3].tim);
-  yprintf(&pbuf4,"\n\rdiff.ct :%12d%12d%12d%12d\n\r",pen->odotimct_int_diff[0].ct ,pen->odotimct_int_diff[1].ct ,pen->odotimct_int_diff[2].ct ,pen->odotimct_int_diff[3].ct );
+  
+  yprintf(&pbuf4,"\n\rdiff.ct :%12d%12d%12d%12d",pen->odotimct_int_diff[0].ct ,pen->odotimct_int_diff[1].ct ,pen->odotimct_int_diff[2].ct ,pen->odotimct_int_diff[3].ct );
+  yprintf(&pbuf1,"%12d\n\r",pen->en_cnt_diff);
+
 extern uint32_t debugodo1;
 yprintf(&pbuf1," x %d\n\r",debugodo1);
 #endif  

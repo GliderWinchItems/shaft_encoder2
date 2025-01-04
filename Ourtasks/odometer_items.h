@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "FreeRTOS.h"
+#include "task.h"
 #include "cmsis_os.h"
 #include "stm32f4xx_hal.h"
 //#include "CanTask.h"

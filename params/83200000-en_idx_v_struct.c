@@ -39,10 +39,10 @@ void odometer_idx_v_struct_hardcode_params(struct ODOMETERLC* p)
    p->drum_width      = 0.165f; // Drum inside width (meters)
    p->rim_to_cushion = (p->drum_outer_dia - p->hub_bare_dia)*0.5f; // Temporary
    p->encoder_ratio   =  6.44f; // Gear ratio--motor:drum
-   p->scale_en_mtr    =  840.0E3f; // encoder ct/time scale to motor rpm
+   p->scale_en_mtr    = ((float)1312500*60*64/(1440*4));// 875.0E3f; // encoder ct/time scale to motor rpm
    p->scale_mtr_drum  = 0.155279503f;// motor rpm scale to drum rpm
    p->scale_en_circum = 737.96964f; // encoder to drum circumference (meters)
-   p->scale_speediff_accel = 1.0E0f; // speed diff sum to motor accel (rad/sec/sec)
+   p->scale_speediff_accel = ((float)(3.141592654*2*1312500*64*64)/(1440*4)); // encoder channels ct/time diff sum to accel (rad/sec/sec)
 
 // CAN ids encoder function
    //                         CANID_NAME      CANID_HEX  CAN_MSG_FMT     DESCRIPTION
@@ -50,7 +50,6 @@ void odometer_idx_v_struct_hardcode_params(struct ODOMETERLC* p)
    p->cid_unit_encoder  = CANID_UNIT_ENCODER1; // 83200000 U8_VAR DiscoveryF4 encoder demo winch:
    p->cid_msg1_encoder  = CANID_MSG1_ENCODER1; // 83A00000 FF_FF  DiscoveryF4 encoder demo winch: lineout, speed
    p->cid_msg2_encoder  = CANID_MSG2_ENCODER1; // 83E00000 FF_FF  DiscoveryF4 encoder demo winch: accel, encoder ctr
-
 
    // We receive
    p->cid_gps_sync     = CANID_HB_TIMESYNC;  // 00400000 U8     GPS time sync distribution msg-GPS time sync msg
