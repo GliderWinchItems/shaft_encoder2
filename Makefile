@@ -124,6 +124,8 @@ C_SOURCES += Ourtasks/odometer_items.c
 ASM_SOURCES =  \
 startup_stm32f407xx.s
 
+#startup_stm32f446xx.S \
+
 
 #######################################
 # binaries
@@ -168,6 +170,8 @@ AS_DEFS =
 C_DEFS =  \
 -DUSE_HAL_DRIVER \
 -DSTM32F407xx
+
+C_DEFS += -DI_AM_CANID=$(I_AM_CANID) \
 
 
 # AS includes

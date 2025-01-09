@@ -21,7 +21,7 @@
 
 uint32_t debugodo1;
 
-/* Private functions and macros to the file */
+static void do_req_codes(struct CANRCVBUF* pcan);
 
 osThreadId OdometerTaskHandle;
 
@@ -65,6 +65,7 @@ struct SWITCHPTR* psw_safeactivex; // Debugging
 
 void StartOdometerTask(void const * argument)
 {
+	struct CANRCVBUF* pcan;
 	struct ODOMETERFUNCTION* p = &odometerfunction; // Convenience pointer
 //   struct CONTROLPANELSTATE* pcp = &cp_state;   // Convenience pointer
 
@@ -118,6 +119,8 @@ debugodo1 += 1;
 
       if ((noteval & ODOMETERNOTBITCMD) != 0)
       { // command/request ('83600000'|'83800000')
+      	pcan = &p->pmbx_cid_cmd_encoder->ncan.can;
+      	do_req_codes(pcan);
       }
 
       if ((noteval & ODOMETERNOTBITTIM2) != 0)
@@ -141,4 +144,30 @@ osThreadId xOdometerTaskCreate(uint32_t taskpriority)
 	OdometerTaskHandle = osThreadCreate(osThread(OdometerTask), NULL);
 	vTaskPrioritySet( OdometerTaskHandle, taskpriority );
 	return OdometerTaskHandle;
+}
+/* *************************************************************************
+ * static void do_req_codes(struct CANRCVBUF* pcan);
+ *	@brief	: Respond to the CAN msg request code
+ *  @param  : pcan = point to CAN msg struct
+ * *************************************************************************/
+static void do_req_codes(struct CANRCVBUF* pcan)
+{
+	/* First payload byte holds root request code. */
+	switch (pcan->cd.uc[0])
+	{
+	case LDR_RESET: // Execute a RESET ###############################
+		#define SCB_AIRCR 0xE000ED0C
+		*(volatile unsigned int*)SCB_AIRCR = (0x5FA << 16) | 0x4;// Cause a RESET
+//		while (1==1);// Redundant. Reset means it is "gone"
+		break; 
+
+	case CMD_CMD_TYPE2: // 
+		break;
+
+	default:
+//		bqfunction.warning = 551;
+morse_trap(551);
+		break;
+	}
+	return;
 }
