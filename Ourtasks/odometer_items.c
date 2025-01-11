@@ -130,6 +130,7 @@ void odometer_items_init(struct ODOMETERFUNCTION* p)
    p->canmsg[ODOCANMSG_UNIT].can.id = p->lc.cid_unit_encoder;
    p->canmsg[ODOCANMSG_MSG1].can.id = p->lc.cid_msg1_encoder;    
    p->canmsg[ODOCANMSG_MSG2].can.id = p->lc.cid_msg2_encoder;    
+   p->canmsg[ODOCANMSG_MSG3].can.id = p->lc.cid_msg3_encoder;   
 
    /* Intermediate ISR that is within FreeRTOS NVIC range.
       is triggered by TIM2 OC which is at top priority. */
@@ -142,6 +143,12 @@ void odometer_items_init(struct ODOMETERFUNCTION* p)
  * static void send_msg1(struct ODOMETERFUNCTION* p);
  * @brief   : Send CAN msg: drum speed, lineout (FF_FF)
  * *************************************************************************/
+/*
+   uint32_t cid_msg1_encoder; // CANID_MSG1_ENCODER1 83A00000 | CANID_MSG1_ENCODER2 83C00000 FF_FF lineout, drum speed
+   uint32_t cid_msg2_encoder; // CANID_MSG2_ENCODER1 83E00000 | CANID_MSG1_ENCODER2 84000000 FF_FF accel, encoder speed
+   uint32_t cid_msg3_encoder; // CANID_MSG3_ENCODER1 84200000 | CANID_MSG1_ENCODER2 84400000 FF_S32 drum speed, encoder counter
+*/
+
 static void send_msg1(struct ODOMETERFUNCTION* p)
 {
    struct CANRCVBUF* pcan = &p->canmsg[ODOCANMSG_MSG1].can;
@@ -152,14 +159,10 @@ static void send_msg1(struct ODOMETERFUNCTION* p)
    }uf;
 
    uf.f = p->odo_speed_ave_drum;
-   pcan->cd.ui[0] = uf.ui;
-
-   uf.f = p->line_out;
    pcan->cd.ui[1] = uf.ui;
 
-// ## speed, encoder counter (FF_S32) payload
-pcan->cd.ui[1] = p->en_cnt; // encoder counter +/-
-
+   uf.f = p->line_out;
+   pcan->cd.ui[0] = uf.ui;
 
    // Place CAN msg on CanTask queue
    xQueueSendToBack(CanTxQHandle,&p->canmsg[ODOCANMSG_MSG1],4);
@@ -181,14 +184,33 @@ static void send_msg2(struct ODOMETERFUNCTION* p)
    uf.f = p->accel_ave_motor; 
    pcan->cd.ui[0] = uf.ui;
 
-   pcan->cd.ui[1] = p->en_cnt; // encoder counter +/-
-
-//## Accleration, Speed (FF_FF) payload
-uf.f = p->odo_speed_ave_drum;
-pcan->cd.ui[1] = uf.ui;   
+   uf.f = p->odo_speed_ave_drum;
+   pcan->cd.ui[1] = uf.ui;   
 
    // Place CAN msg on CanTask queue
    xQueueSendToBack(CanTxQHandle,&p->canmsg[ODOCANMSG_MSG2],4);
+   return;
+}
+/* *************************************************************************
+ * static void send_msg3(struct ODOMETERFUNCTION* p);
+ * @brief   : Send CAN msg: acceleration, encoder ctr (FF_S32)
+ * *************************************************************************/
+static void send_msg3(struct ODOMETERFUNCTION* p)
+{
+   struct CANRCVBUF* pcan = &p->canmsg[ODOCANMSG_MSG3].can;
+   union UF
+   {
+      float f;
+      uint32_t ui;
+   }uf;
+
+   uf.f = p->accel_ave_motor; 
+   pcan->cd.ui[0] = uf.ui;
+
+   pcan->cd.ui[1] = p->en_cnt; // encoder counter +/-
+
+   // Place CAN msg on CanTask queue
+   xQueueSendToBack(CanTxQHandle,&p->canmsg[ODOCANMSG_MSG3],4);
    return;
 }
 /* *************************************************************************
@@ -245,9 +267,14 @@ void odometer_items_send_speed_lineout_msg(struct ODOMETERFUNCTION* p)
    p->line_out += ((float)p->odotimct_int_diff[0].ct * p->working_circum * p->en_drum_ratio);
    p->working_circum -= p->drum_cir_change_per_rev;
 
-   send_msg1(p);
-// ### Temporary for debugging
-send_msg2(p);
+   /* Set up payload and send, if msg enabled. */
+   if (p->lc.enable[0] != 0)
+      send_msg1(p);
+   if (p->lc.enable[1] != 0)
+      send_msg2(p);
+   if (p->lc.enable[2] != 0)
+      send_msg3(p);
+
    xTaskNotify(defaultTaskHandle, 
          DEFAULTTSKBIT01,  /* 'or' bit assigned to buffer to notification value. */
          eSetBits  

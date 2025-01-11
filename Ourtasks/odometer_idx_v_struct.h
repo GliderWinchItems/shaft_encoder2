@@ -54,15 +54,20 @@ struct ODOMETERLC
  // List of CAN ID's for setting up hw filter for incoming msgs
    //                      CANID_HEX      CANID_NAME             CAN_MSG_FMT     DESCRIPTION
    // We send; Others receive
-   uint32_t cid_unit_encoder; // CANID_UNIT_ENCODER1 83200000 | CANID_UNIT_ENCODER2 83400000 U8_VAR DiscoveryF4 encoder demo winch
-   uint32_t cid_msg1_encoder;  // CANID_MSG1_ENCODER1|CANID_MSG1_ENCODER2', '83A00000'|'83C00000','UNIT_ENCODER', 1,1,'FF_FF','DiscoveryF4 encoder: lineout,speed');
-   uint32_t cid_msg2_encoder;  // CANID_MSG2_ENCODER1|CANID_MSG2_ENCODER2', '83E00000'|'84000000' FF_FF','DiscoveryF4 encoder: accel, encoder counter
+   uint32_t cid_unit_encoder; // CANID_UNIT_ENCODER1 83200000 | CANID_UNIT_ENCODER2 83400000 U8_VAR DiscoveryF4 encoder
+   uint32_t cid_msg1_encoder; // CANID_MSG1_ENCODER1 83A00000 | CANID_MSG1_ENCODER2 83C00000 FF_FF lineout, drum speed
+   uint32_t cid_msg2_encoder; // CANID_MSG2_ENCODER1 83E00000 | CANID_MSG1_ENCODER2 84000000 FF_FF accel, encoder speed
+   uint32_t cid_msg3_encoder; // CANID_MSG3_ENCODER1 84200000 | CANID_MSG1_ENCODER2 84400000 FF_S32 drum speed, encoder counter
+
+   /* Enable msg1,2,3 */
+   uint8_t msg_enable[3]; // 1 = enable, 0 = do not send
 
 // List of CAN ID's for setting up hw filter for incoming msgs
    	// We receive
    uint32_t cid_gps_sync;    // CANID_HB_TIMESYNC;  // 00400000 U8     GPS time sync distribution msg-GPS time sync msg
    uint32_t cid_mc_state;    // CANID_MC_STATE;     // 26000000 MC     MC Launch state msg
    uint32_t cid_cmd_encoder; // CANID_CMD_ENCODER1|CANID_CMD_ENCODER2', '83600000'|'83800000','UNIT_ENCODER', 1,1,'U8_VAR','DiscoveryF4 encoder: command');
+   uint32_t cid_cmd_uni_bms_pc_i; // CANID_UNI_BMS_PC_I' AEC00000', UNIversal From PC, Used for reset');
 };
 
 /* *************************************************************************/

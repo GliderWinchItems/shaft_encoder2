@@ -79,6 +79,7 @@ void StartOdometerTask(void const * argument)
    p->pmbx_cid_gps_sync    =  MailboxTask_add(pctl0,p->lc.cid_gps_sync,NULL,ODOMETERNOTBITSYNC,0,U8);
    p->pmbx_cid_mc_state    =  MailboxTask_add(pctl0,p->lc.cid_mc_state,NULL,ODOMETERNOTBITMC,0,U8);
    p->pmbx_cid_cmd_encoder =  MailboxTask_add(pctl0,p->lc.cid_cmd_encoder ,NULL,ODOMETERNOTBITCMD,0,U8);
+   p->pmbx_cid_cmd_uni_bms_pc_i = MailboxTask_add(pctl0,p->lc.cid_cmd_uni_bms_pc_i ,NULL,ODOMETERNOTBITRESET,0,U8);
 
 extern void odometer_items_init(struct ODOMETERFUNCTION* p);
    odometer_items_init(p);
@@ -129,6 +130,19 @@ toggle_led();
          odometer_items_compute();
          odometer_items_hearbeat();
       }
+
+	#define SCB_AIRCR 0xE000ED0C
+
+      if ((noteval & ODOMETERNOTBITRESET) != 0)
+      { // command/request: LDR_RESET ('AEC00000')
+      	pcan = &p->pmbx_cid_cmd_uni_bms_pc_i->ncan.can;
+      	if (pcan->cd.uc[0] == LDR_RESET) // Execute a RESET ###############################
+      	{
+				*(volatile unsigned int*)SCB_AIRCR = (0x5FA << 16) | 0x4;// Cause a RESET
+//	while (1==1);// Redundant. Reset means it is "gone"
+      	}
+//			morse_trap(888);
+      }
 	}
 }
 
@@ -159,10 +173,14 @@ static void do_req_codes(struct CANRCVBUF* pcan)
 		#define SCB_AIRCR 0xE000ED0C
 		*(volatile unsigned int*)SCB_AIRCR = (0x5FA << 16) | 0x4;// Cause a RESET
 //		while (1==1);// Redundant. Reset means it is "gone"
+		morse_trap(888);
 		break; 
 
 	case CMD_CMD_TYPE2: // 
 		break;
+
+	case LDR_SQUELCH:
+		break;		
 
 	default:
 //		bqfunction.warning = 551;

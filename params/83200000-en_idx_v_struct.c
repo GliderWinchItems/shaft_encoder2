@@ -37,7 +37,7 @@ void odometer_idx_v_struct_hardcode_params(struct ODOMETERLC* p)
    p->rope_dia        = 4.5f;   // Effective dia for drum loading computations (mm)
    p->drum_outer_dia  = 0.975f; // Drum flange outer diameter(meters)
    p->drum_width      = 0.165f; // Drum inside width (meters)
-   p->rim_to_cushion = (p->drum_outer_dia - p->hub_bare_dia)*0.5f; // Temporary
+   p->rim_to_cushion  = (p->drum_outer_dia - p->hub_bare_dia)*0.5f; // Temporary
    p->encoder_ratio   =  6.44f; // Gear ratio--motor:drum
    p->scale_en_mtr    = ((float)1312500*60*64/(1440*4));// 875.0E3f; // encoder ct/time scale to motor rpm
    p->scale_mtr_drum  = 0.155279503f;// motor rpm scale to drum rpm
@@ -49,12 +49,20 @@ void odometer_idx_v_struct_hardcode_params(struct ODOMETERLC* p)
    // We send; Others receive
    p->cid_unit_encoder  = CANID_UNIT_ENCODER1; // 83200000 U8_VAR DiscoveryF4 encoder demo winch:
    p->cid_msg1_encoder  = CANID_MSG1_ENCODER1; // 83A00000 FF_FF  DiscoveryF4 encoder demo winch: lineout, speed
-   p->cid_msg2_encoder  = CANID_MSG2_ENCODER1; // 83E00000 FF_FF  DiscoveryF4 encoder demo winch: accel, encoder ctr
+   p->cid_msg2_encoder  = CANID_MSG2_ENCODER1; // 83E00000 FF_FF  DiscoveryF4 encoder demo winch: accel, encoder speed
+   p->cid_msg3_encoder  = CANID_MSG3_ENCODER1; // 84200000 FF_S32 DiscoveryF4 encoder demo winch: drum speed, encoder counter
+
+   /* Enable sending of these msgs (which may be at high rate). 1 = enable; 0 = disable. */
+   p->msg_enable[0] = 1; // MSG1
+   p->msg_enable[1] = 1; // MSG2
+   p->msg_enable[2] = 1; // MSG3
 
    // We receive
-   p->cid_gps_sync     = CANID_HB_TIMESYNC;  // 00400000 U8     GPS time sync distribution msg-GPS time sync msg
-   p->cid_mc_state     = CANID_MC_STATE;     // 26000000 MC     MC Launch state msg
-   p->cid_cmd_encoder  = CANID_CMD_ENCODER1; // 83600000 U8_VAR DiscoveryF4 encoder demo winch: command
+   p->cid_gps_sync         = CANID_HB_TIMESYNC;  // 00400000 U8     GPS time sync distribution msg-GPS time sync msg
+   p->cid_mc_state         = CANID_MC_STATE;     // 26000000 MC     MC Launch state msg
+   p->cid_cmd_encoder      = CANID_CMD_ENCODER1; // 83600000 U8_VAR DiscoveryF4 encoder demo winch: command
+   p->cid_cmd_uni_bms_pc_i = CANID_UNI_BMS_PC_I; // AEC00000 PC  UNIversal From PC, Used for CAN loading reset');
+
 
 	return;
 }

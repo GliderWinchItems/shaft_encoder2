@@ -26,11 +26,13 @@
 #define ODOMETERNOTBITMC   (1<<2) // CAN msg: MC state CAN  msg
 #define ODOMETERNOTBITCMD  (1<<3) // CAN msg: Command requests
 #define ODOMETERNOTBITTIM2 (1<<4) // TIM2 CH1 new readings
+#define ODOMETERNOTBITRESET (1<<5) // CAN msg: Reset request from PC
 
-#define NUMCANMSGSODOMETER 3 // Number of CAN msgs we send
-#define ODOCANMSG_UNIT  0
-#define ODOCANMSG_MSG1  1  // (float) Speed & (float) Line out
-#define ODOCANMSG_MSG2  2  // (float) Acceleration & (int32_t) encoder counter register
+#define NUMCANMSGSODOMETER 4 // Number of CAN msgs we send
+#define ODOCANMSG_UNIT  0  // Unit 
+#define ODOCANMSG_MSG1  1  // FF_FF: (float) line out & (float) drum speed)
+#define ODOCANMSG_MSG2  2  // FF_FF: (float) Acceleration & (int32_t) encoder speed
+#define ODOCANMSG_MSG3  3  // FF_S32: (float) Speed & (int32_t) encoder counter
 
 #define SDEL 0.00001f // Zero speed detection window +/- (not scaled)
 
@@ -99,6 +101,7 @@ struct ODOMETERFUNCTION
    struct MAILBOXCAN* pmbx_cid_gps_sync;    // CANID_HB_TIMESYNC:  U8 : GPS_1: U8 GPS time sync distribution msg-GPS time sync msg
    struct MAILBOXCAN* pmbx_cid_mc_state;    //'CANID_MC_STATE','26000000', 'MC', 'UNDEF','MC: Launch state msg');
    struct MAILBOXCAN* pmbx_cid_cmd_encoder; // CANID_CMD_ENCODER1|CANID_CMD_ENCODER2', '83600000'|'83800000','UNIT_ENCODER', 1,1,'U8_VAR','DiscoveryF4 encoder: command');
+   struct MAILBOXCAN* pmbx_cid_cmd_uni_bms_pc_i; // CANID_UNI_BMS_PC_I' AEC00000', UNIversal From PC, Used for reset');
 
    /* CAN msgs this task sends. */
    struct CANTXQMSG canmsg[NUMCANMSGSODOMETER];
