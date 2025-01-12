@@ -138,8 +138,11 @@ toggle_led();
       	pcan = &p->pmbx_cid_cmd_uni_bms_pc_i->ncan.can;
       	if (pcan->cd.uc[0] == LDR_RESET) // Execute a RESET ###############################
       	{
-				*(volatile unsigned int*)SCB_AIRCR = (0x5FA << 16) | 0x4;// Cause a RESET
-//	while (1==1);// Redundant. Reset means it is "gone"
+      		if (pcan->cd.ui[1] == p->lc.cid_unit_encoder)
+      		{
+					*(volatile unsigned int*)SCB_AIRCR = (0x5FA << 16) | 0x4;// Cause a RESET
+				//	while (1==1);// Redundant. Reset means it is "gone"
+				}
       	}
 //			morse_trap(888);
       }

@@ -268,11 +268,11 @@ void odometer_items_send_speed_lineout_msg(struct ODOMETERFUNCTION* p)
    p->working_circum -= p->drum_cir_change_per_rev;
 
    /* Set up payload and send, if msg enabled. */
-   if (p->lc.enable[0] != 0)
+   if (p->lc.msg_enable[0] != 0)
       send_msg1(p);
-   if (p->lc.enable[1] != 0)
+   if (p->lc.msg_enable[1] != 0)
       send_msg2(p);
-   if (p->lc.enable[2] != 0)
+   if (p->lc.msg_enable[2] != 0)
       send_msg3(p);
 
    xTaskNotify(defaultTaskHandle, 
