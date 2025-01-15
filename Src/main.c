@@ -70,7 +70,6 @@
 #include "MailboxTask.h"
 #include "OdometerTask.h"
 #include "odometer_items.h"
-
 #include "levelwind_items.h"
 #include "drum_items.h"
 #include "LevelwindTask.h"
@@ -79,8 +78,6 @@
 //#include "BrakeTask.h"
 #include "ADCTask.h"
 #include "adcparams.h"
-
-
 
 /* USER CODE END Includes */
 

@@ -78,6 +78,7 @@ Src/sysmem.c \
 Src/syscalls.c
 
 # /* USER CODE BEGIN */
+# Parameter files with the unit's CAN ID prefix
 C_SOURCES += params/$(ADC_PARAM)
 C_SOURCES += params/$(EN_PARAM)
 
