@@ -5,8 +5,7 @@
 # E.g. ./cc 83200000 192.168.2.50 32125
 
 ./mm $1
-pwd
-echo cc 10
+
 cd ../../GliderWinchCommons/embed/svn_discoveryf4/PC/sensor/CANldr1/trunk
 ./CANldr $2 $3 $1 ../../../../../../../GliderWinchItems/shaft_encoder2/build/shaft_encoder2.xbin
 echo $?
